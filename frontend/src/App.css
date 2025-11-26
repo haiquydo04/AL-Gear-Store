@@ -1,0 +1,52 @@
+.App {
+  min-height: 100vh;
+  background: var(--gear-gradient-dark);
+  display: flex;
+  flex-direction: column;
+  color: var(--gear-text);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.App::before,
+.App::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.App::before {
+  width: 420px;
+  height: 420px;
+  background: rgba(227, 3, 43, 0.2);
+  top: -160px;
+  right: -120px;
+}
+
+.App::after {
+  width: 520px;
+  height: 520px;
+  background: rgba(255, 122, 69, 0.15);
+  bottom: -220px;
+  left: -160px;
+}
+
+.app-main {
+  flex: 1;
+  padding-top: 96px;
+  position: relative;
+  z-index: 1;
+}
+
+.page-section {
+  padding: clamp(56px, 8vw, 92px) 0;
+}
+
+.page-section + .page-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
