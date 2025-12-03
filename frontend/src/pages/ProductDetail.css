@@ -51,6 +51,12 @@
   margin-bottom: 16px;
 }
 
+.short-description {
+  font-size: 18px;
+  color: var(--gear-muted);
+  margin: 8px 0 16px;
+}
+
 .detail-meta {
   display: flex;
   flex-wrap: wrap;

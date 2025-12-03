@@ -65,6 +65,37 @@
   margin-bottom: 32px;
 }
 
+.management-section.split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.form-card {
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.45);
+}
+
+.form-card form {
+  display: grid;
+  gap: 14px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filter-bar input,
+.filter-bar select {
+  min-width: 180px;
+}
+
 .table-container {
   overflow-x: auto;
   margin-top: 20px;
@@ -94,6 +125,12 @@
   padding: 6px 12px;
   font-size: 12px;
   letter-spacing: 0.08em;
+}
+
+@media (max-width: 992px) {
+  .management-section.split-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 

@@ -60,6 +60,11 @@ const ProductDetail = () => {
       return;
     }
 
+    if (product?.stock === 0) {
+      alert('Sản phẩm này đã hết hàng');
+      return;
+    }
+
     try {
       await axios.post('/api/cart/items', {
         product_id: id,
@@ -128,10 +133,13 @@ const ProductDetail = () => {
           <div className="detail-info">
             <span className="badge">GEARVN EXCLUSIVE</span>
             <h1>{product.name}</h1>
+            {product.short_description && <p className="short-description">{product.short_description}</p>}
             <p className="price">{formatPrice(product.price)}</p>
             <div className="detail-meta">
               <span>Đánh giá {avgRating.toFixed(1)} / 5 ({reviews.length} đánh giá)</span>
               <span>Kho: {product.stock} sản phẩm</span>
+              <span>Bảo hành: {product.warranty_months} tháng</span>
+              <span>Xuất xứ: {product.origin || 'Đang cập nhật'}</span>
             </div>
             <p className="description">{product.description}</p>
 
@@ -170,6 +178,12 @@ const ProductDetail = () => {
           <div className="glow-card">
             <h3>Thông tin chi tiết</h3>
             <p className="description">{product.description}</p>
+            {product.details && (
+              <>
+                <h4>Chi tiết kỹ thuật</h4>
+                <p className="description">{product.details}</p>
+              </>
+            )}
           </div>
           <div className="glow-card detail-support">
             <h3>Dịch vụ kèm theo</h3>

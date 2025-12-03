@@ -15,10 +15,15 @@ const ManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [newProduct, setNewProduct] = useState({
     category_id: '',
+    code: '',
     name: '',
+    short_description: '',
     description: '',
+    details: '',
     price: '',
     stock: '',
+    warranty_months: 12,
+    origin: '',
     image_url: ''
   });
   const [categories, setCategories] = useState([]);
@@ -67,10 +72,15 @@ const ManagerDashboard = () => {
       alert('Tạo sản phẩm thành công!');
       setNewProduct({
         category_id: '',
+        code: '',
         name: '',
+        short_description: '',
         description: '',
+        details: '',
         price: '',
         stock: '',
+        warranty_months: 12,
+        origin: '',
         image_url: ''
       });
       fetchStats();
@@ -156,11 +166,31 @@ const ManagerDashboard = () => {
                   </select>
                 </div>
                 <div>
+                  <label>Mã sản phẩm:</label>
+                  <input
+                    type="text"
+                    value={newProduct.code}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, code: e.target.value }))}
+                    required
+                    className="input"
+                  />
+                </div>
+                <div>
                   <label>Tên sản phẩm:</label>
                   <input
                     type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label>Mô tả ngắn:</label>
+                  <input
+                    type="text"
+                    value={newProduct.short_description}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, short_description: e.target.value }))}
                     required
                     className="input"
                   />
@@ -175,11 +205,20 @@ const ManagerDashboard = () => {
                   />
                 </div>
                 <div>
+                  <label>Chi tiết:</label>
+                  <textarea
+                    value={newProduct.details}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, details: e.target.value }))}
+                    className="input"
+                    rows="4"
+                  />
+                </div>
+                <div>
                   <label>Giá:</label>
                   <input
                     type="number"
                     value={newProduct.price}
-                    onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, price: Number(e.target.value) }))}
                     required
                     className="input"
                   />
@@ -189,8 +228,27 @@ const ManagerDashboard = () => {
                   <input
                     type="number"
                     value={newProduct.stock}
-                    onChange={(e) => setNewProduct(prev => ({ ...prev, stock: e.target.value }))}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, stock: Number(e.target.value) }))}
                     required
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label>Bảo hành (tháng):</label>
+                  <input
+                    type="number"
+                    value={newProduct.warranty_months}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, warranty_months: Number(e.target.value) }))}
+                    className="input"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label>Xuất xứ:</label>
+                  <input
+                    type="text"
+                    value={newProduct.origin}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, origin: e.target.value }))}
                     className="input"
                   />
                 </div>
@@ -357,5 +415,7 @@ const ReportsManagement = () => {
 };
 
 export default ManagerDashboard;
+
+
 
 

@@ -21,6 +21,19 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  is_hidden: {
+    type: Boolean,
+    default: false
+  },
+  hidden_at: {
+    type: Date,
+    default: null
+  },
+  hidden_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Account',
+    default: null
+  },
   created_at: {
     type: Date,
     default: Date.now
@@ -28,5 +41,7 @@ const reviewSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Review', reviewSchema);
+
+
 
 

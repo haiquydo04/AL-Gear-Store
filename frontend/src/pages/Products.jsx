@@ -230,6 +230,7 @@ const Products = () => {
                     }}
                   />
                   <h3>{product.name}</h3>
+                  {product.short_description && <p className="card-desc">{product.short_description}</p>}
                   <p className="price">{formatPrice(product.price)}</p>
                   <p className="stock">Tồn kho: {product.stock}</p>
                 </Link>

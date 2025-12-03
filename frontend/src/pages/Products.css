@@ -92,6 +92,17 @@
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
+.product-card h3 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.product-card .card-desc {
+  font-size: 14px;
+  color: var(--gear-muted);
+  min-height: 38px;
+}
+
 .no-products {
   text-align: center;
   padding: 50px;

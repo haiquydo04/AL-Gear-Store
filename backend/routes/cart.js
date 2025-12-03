@@ -42,6 +42,10 @@ router.post('/items', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
     }
 
+    if (product.stock === 0) {
+      return res.status(400).json({ message: 'Sản phẩm này đã hết hàng' });
+    }
+
     if (product.stock < quantity) {
       return res.status(400).json({ message: 'Số lượng sản phẩm không đủ' });
     }
@@ -94,6 +98,10 @@ router.put('/items/:id', authenticate, async (req, res) => {
     const cart = await Cart.findById(cartItem.cart_id);
     if (cart.user_id.toString() !== req.user.userId?.toString()) {
       return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
+
+    if (cartItem.product_id.stock === 0) {
+      return res.status(400).json({ message: 'Sản phẩm này đã hết hàng' });
     }
 
     if (cartItem.product_id.stock < quantity) {
@@ -203,5 +211,7 @@ router.get('/guest/:sessionId', optionalAuth, async (req, res) => {
 });
 
 module.exports = router;
+
+
 
 

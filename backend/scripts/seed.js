@@ -82,6 +82,10 @@ const productDescriptions = {
   accessory: 'Phụ kiện công nghệ chất lượng cao, tương thích với nhiều thiết bị, thiết kế đẹp và bền bỉ.'
 };
 
+const origins = ['Việt Nam', 'Singapore', 'Malaysia', 'Trung Quốc', 'Mỹ', 'Nhật Bản', 'Hàn Quốc'];
+
+const makeProductCode = (prefix, index) => `${prefix}${String(index + 1).padStart(3, '0')}`;
+
 const reviewComments = [
   'Sản phẩm rất tốt, đúng như mô tả!',
   'Giao hàng nhanh, đóng gói cẩn thận.',
@@ -231,10 +235,10 @@ async function seedDatabase() {
     // 4. Seed Categories
     console.log('📝 Seeding Categories...');
     const categories = await Category.insertMany([
-      { category_name: 'Laptop', description: 'Máy tính xách tay các loại' },
-      { category_name: 'Điện thoại', description: 'Smartphone và điện thoại di động' },
-      { category_name: 'Máy tính', description: 'Máy tính để bàn và PC' },
-      { category_name: 'Phụ kiện', description: 'Phụ kiện công nghệ và linh kiện' }
+      { category_name: 'Laptop', code: 'LAPTOP', description: 'Máy tính xách tay các loại' },
+      { category_name: 'Điện thoại', code: 'PHONE', description: 'Smartphone và điện thoại di động' },
+      { category_name: 'Máy tính', code: 'PC', description: 'Máy tính để bàn và PC' },
+      { category_name: 'Phụ kiện', code: 'ACCESS', description: 'Phụ kiện công nghệ và linh kiện' }
     ]);
     console.log(`✅ Created ${categories.length} categories`);
 
@@ -251,10 +255,15 @@ async function seedDatabase() {
       const product = await Product.create({
         category_id: categories.find(c => c.category_name === 'Laptop')._id,
         manager_id: managers[i % managers.length]._id,
+        code: makeProductCode('LAP', i),
         name: productNames.laptop[i],
+        short_description: 'Laptop cao cấp tối ưu cho công việc và giải trí',
         description: productDescriptions.laptop,
+        details: 'CPU Intel thế hệ mới, RAM 16GB, SSD NVMe, màn hình 2K, Wi-Fi 6E',
         price: 15000000 + (i * 2000000),
         stock: Math.floor(Math.random() * 50) + 10,
+        warranty_months: 24,
+        origin: origins[i % origins.length],
         image_url: `https://picsum.photos/400/300?random=${i + 1}`
       });
       products.push(product);
@@ -265,10 +274,15 @@ async function seedDatabase() {
       const product = await Product.create({
         category_id: categories.find(c => c.category_name === 'Điện thoại')._id,
         manager_id: managers[i % managers.length]._id,
+        code: makeProductCode('PHN', i),
         name: productNames.phone[i],
+        short_description: 'Smartphone flagship camera AI',
         description: productDescriptions.phone,
+        details: 'Màn AMOLED 120Hz, camera 50MP, chipset 4nm, sạc nhanh 65W',
         price: 10000000 + (i * 1500000),
         stock: Math.floor(Math.random() * 50) + 10,
+        warranty_months: 18,
+        origin: origins[(i + 2) % origins.length],
         image_url: `https://picsum.photos/400/300?random=${i + 20}`
       });
       products.push(product);
@@ -279,10 +293,15 @@ async function seedDatabase() {
       const product = await Product.create({
         category_id: categories.find(c => c.category_name === 'Máy tính')._id,
         manager_id: managers[i % managers.length]._id,
+        code: makeProductCode('PC', i),
         name: productNames.computer[i],
+        short_description: 'PC gaming/workstation lắp sẵn',
         description: productDescriptions.computer,
+        details: 'Card RTX 40 series, PSU 80+ Gold, tản nhiệt nước AIO, case ARGB',
         price: 20000000 + (i * 3000000),
         stock: Math.floor(Math.random() * 30) + 5,
+        warranty_months: 36,
+        origin: 'Việt Nam',
         image_url: `https://picsum.photos/400/300?random=${i + 40}`
       });
       products.push(product);
@@ -293,10 +312,15 @@ async function seedDatabase() {
       const product = await Product.create({
         category_id: categories.find(c => c.category_name === 'Phụ kiện')._id,
         manager_id: managers[i % managers.length]._id,
+        code: makeProductCode('ACC', i),
         name: productNames.accessory[i],
+        short_description: 'Phụ kiện chính hãng cho hệ sinh thái AL',
         description: productDescriptions.accessory,
+        details: 'Bảo hành chính hãng, tương thích đa nền tảng, hỗ trợ đổi mới 1-1',
         price: 500000 + (i * 200000),
         stock: Math.floor(Math.random() * 100) + 20,
+        warranty_months: 12,
+        origin: origins[(i + 3) % origins.length],
         image_url: `https://picsum.photos/400/300?random=${i + 60}`
       });
       products.push(product);
@@ -324,7 +348,7 @@ async function seedDatabase() {
     }
     console.log(`✅ Created ${reviews.length} reviews`);
 
-    // 7. Seed Carts and Cart Items
+    // 7. Seed Carts and Cart Items (FIXED: avoid duplicate cart_id+product_id)
     console.log('📝 Seeding Carts...');
     const carts = [];
     for (let i = 0; i < 10; i++) {
@@ -337,8 +361,24 @@ async function seedDatabase() {
       // Add items to cart
       const numItems = Math.floor(Math.random() * 5) + 1;
       let totalPrice = 0;
+
+      // Use a Set to avoid duplicate product in the same cart
+      const usedProducts = new Set();
+
       for (let j = 0; j < numItems; j++) {
-        const product = products[Math.floor(Math.random() * products.length)];
+        let product;
+        // pick a product that's not already used in this cart
+        let attempts = 0;
+        do {
+          product = products[Math.floor(Math.random() * products.length)];
+          attempts++;
+          // safety: if we've attempted many times and products list is small, break to avoid infinite loop
+          if (attempts > products.length * 2) break;
+        } while (usedProducts.has(product._id.toString()));
+
+        // mark as used
+        usedProducts.add(product._id.toString());
+
         const quantity = Math.floor(Math.random() * 3) + 1;
         const subtotal = product.price * quantity;
         totalPrice += subtotal;
@@ -350,6 +390,7 @@ async function seedDatabase() {
           subtotal: subtotal
         });
       }
+
       cart.total_price = totalPrice;
       await cart.save();
     }
@@ -413,7 +454,10 @@ async function seedDatabase() {
         order_date: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000),
         status: orderStatuses[Math.floor(Math.random() * orderStatuses.length)],
         payment_method: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
-        payment_status: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)]
+        payment_status: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
+        shipping_name: customer.full_name,
+        shipping_phone: customer.phone || '0900000000',
+        shipping_address: customer.address || 'TP. HCM'
       });
       orders.push(order);
 
@@ -486,5 +530,3 @@ async function seedDatabase() {
 }
 
 seedDatabase();
-
-

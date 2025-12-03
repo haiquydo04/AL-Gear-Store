@@ -8,12 +8,15 @@ const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
+    confirmPassword: '',
     full_name: '',
     email: '',
     phone: '',
     address: ''
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [devActivationToken, setDevActivationToken] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -24,10 +27,24 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
-    const result = await register(formData);
+    if (formData.password !== formData.confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(formData.password)) {
+      setError('Mật khẩu phải có ít nhất 8 ký tự bao gồm chữ và số');
+      return;
+    }
+
+    const payload = { ...formData };
+    const result = await register(payload);
     if (result.success) {
-      navigate('/');
+      setSuccess('Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt tài khoản.');
+      setDevActivationToken(result.data?.activationToken || '');
+      setTimeout(() => navigate('/login'), 2500);
     } else {
       setError(result.message);
     }
@@ -50,6 +67,16 @@ const Register = () => {
         <div className="auth-panel auth-panel--form">
           <h2>Đăng ký</h2>
           {error && <div className="error">{error}</div>}
+          {success && (
+            <div className="success">
+              {success}
+              {devActivationToken && (
+                <p className="dev-hint">
+                  Token DEV: <code>{devActivationToken}</code>
+                </p>
+              )}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div>
               <label>Tên đăng nhập:</label>
@@ -68,6 +95,17 @@ const Register = () => {
                 type="password"
                 name="password"
                 value={formData.password}
+                onChange={handleChange}
+                required
+                className="input"
+              />
+            </div>
+            <div>
+              <label>Xác nhận mật khẩu:</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
                 onChange={handleChange}
                 required
                 className="input"

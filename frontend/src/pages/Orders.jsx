@@ -10,6 +10,8 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackType, setFeedbackType] = useState('success');
 
   useEffect(() => {
     if (!user) {
@@ -39,6 +41,20 @@ const Orders = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId) => {
+    const confirmCancel = window.confirm('Bạn có muốn hủy đơn hàng này?');
+    if (!confirmCancel) return;
+    try {
+      await axios.post(`/api/orders/${orderId}/cancel`);
+      setFeedback('Đơn hàng đã được hủy');
+      setFeedbackType('success');
+      fetchOrders();
+    } catch (error) {
+      setFeedback(error.response?.data?.message || 'Không thể hủy đơn hàng');
+      setFeedbackType('error');
+    }
+  };
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -65,6 +81,11 @@ const Orders = () => {
     <div className="orders-page">
       <div className="container">
         <h1>Đơn hàng của tôi</h1>
+        {feedback && (
+          <div className={feedbackType === 'success' ? 'success' : 'error'}>
+            {feedback}
+          </div>
+        )}
 
         {orders.length === 0 ? (
           <div className="no-orders">
@@ -92,6 +113,9 @@ const Orders = () => {
                   <p><strong>Tổng tiền:</strong> {formatPrice(order.total_amount)}</p>
                   <p><strong>Phương thức thanh toán:</strong> {order.payment_method}</p>
                   <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
+                  <p><strong>Người nhận:</strong> {order.shipping_name}</p>
+                  <p><strong>Số điện thoại:</strong> {order.shipping_phone}</p>
+                  <p><strong>Địa chỉ:</strong> {order.shipping_address}</p>
                 </div>
                 <button
                   onClick={() => fetchOrderDetails(order._id)}
@@ -99,6 +123,14 @@ const Orders = () => {
                 >
                   Xem chi tiết
                 </button>
+                {order.status === 'pending' && (
+                  <button
+                    onClick={() => handleCancelOrder(order._id)}
+                    className="btn btn-secondary"
+                  >
+                    Hủy đơn hàng
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -108,6 +140,13 @@ const Orders = () => {
           <div className="order-details-modal" onClick={() => setSelectedOrder(null)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <h2>Chi tiết đơn hàng</h2>
+              {selectedOrder.order && (
+                <div className="order-shipping">
+                  <p><strong>Người nhận:</strong> {selectedOrder.order.shipping_name}</p>
+                  <p><strong>Số điện thoại:</strong> {selectedOrder.order.shipping_phone}</p>
+                  <p><strong>Địa chỉ:</strong> {selectedOrder.order.shipping_address}</p>
+                </div>
+              )}
               <div className="order-details">
                 {selectedOrder.orderDetails?.map((detail, idx) => (
                   <div key={idx} className="detail-item">
@@ -139,5 +178,7 @@ const Orders = () => {
 };
 
 export default Orders;
+
+
 
 

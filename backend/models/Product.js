@@ -11,12 +11,28 @@ const productSchema = new mongoose.Schema({
     ref: 'UserProfile',
     required: true
   },
+  code: {
+    type: String,
+    required: true,
+    unique: true,
+    uppercase: true,
+    trim: true
+  },
   name: {
     type: String,
     required: true,
     trim: true
   },
+  short_description: {
+    type: String,
+    required: true,
+    trim: true
+  },
   description: {
+    type: String,
+    trim: true
+  },
+  details: {
     type: String,
     trim: true
   },
@@ -30,6 +46,16 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: 0,
     default: 0
+  },
+  warranty_months: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  origin: {
+    type: String,
+    default: '',
+    trim: true
   },
   image_url: {
     type: String,
@@ -51,5 +77,7 @@ productSchema.pre('save', function(next) {
 });
 
 module.exports = mongoose.model('Product', productSchema);
+
+
 
 

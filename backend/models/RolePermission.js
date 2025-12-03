@@ -21,3 +21,5 @@ rolePermissionSchema.index({ role_id: 1, permission_key: 1 }, { unique: true });
 module.exports = mongoose.model('RolePermission', rolePermissionSchema);
 
 
+
+

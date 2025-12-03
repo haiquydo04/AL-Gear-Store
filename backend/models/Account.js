@@ -18,8 +18,24 @@ const accountSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'suspended'],
-    default: 'active'
+    enum: ['pending', 'active', 'inactive', 'suspended'],
+    default: 'pending'
+  },
+  activation_token: {
+    type: String,
+    default: null
+  },
+  activation_expires: {
+    type: Date,
+    default: null
+  },
+  reset_password_token: {
+    type: String,
+    default: null
+  },
+  reset_password_expires: {
+    type: Date,
+    default: null
   },
   created_at: {
     type: Date,
@@ -28,5 +44,7 @@ const accountSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Account', accountSchema);
+
+
 
 

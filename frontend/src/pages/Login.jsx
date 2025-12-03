@@ -77,6 +77,9 @@ const Login = () => {
           <p className="auth-switch">
             Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
           </p>
+          <p className="auth-switch">
+            Quên mật khẩu? <Link to="/forgot-password">Khôi phục tại đây</Link>
+          </p>
           <div className="demo-accounts">
             <p><strong>Tài khoản demo:</strong></p>
             <p>Admin: admin / 123456</p>

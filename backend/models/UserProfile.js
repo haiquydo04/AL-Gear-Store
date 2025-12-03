@@ -27,6 +27,16 @@ const userProfileSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other', 'unspecified'],
+    default: 'unspecified'
+  },
+  avatar_url: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   created_at: {
     type: Date,
     default: Date.now
@@ -34,5 +44,7 @@ const userProfileSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('UserProfile', userProfileSchema);
+
+
 
 

@@ -27,3 +27,5 @@ const chatbotLogSchema = new mongoose.Schema({
 module.exports = mongoose.model('ChatbotLog', chatbotLogSchema);
 
 
+
+

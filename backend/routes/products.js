@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const CartItem = require('../models/CartItem');
+const OrderDetail = require('../models/OrderDetail');
 const { authenticate, authorize, optionalAuth } = require('../middleware/auth');
 
 // Get all products (public, with optional auth)
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { category, search, minPrice, maxPrice, page = 1, limit = 12 } = req.query;
+    const {
+      category,
+      search,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 12
+    } = req.query;
     const query = {};
 
     if (category) {
@@ -16,6 +25,8 @@ router.get('/', optionalAuth, async (req, res) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+        { short_description: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
       ];
     }
@@ -28,7 +39,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
     const skip = (page - 1) * limit;
     const products = await Product.find(query)
-      .populate('category_id', 'category_name')
+      .populate('category_id', 'category_name code')
       .populate('manager_id', 'full_name')
       .skip(skip)
       .limit(Number(limit))
@@ -70,20 +81,54 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // Create product (Manager/Admin only)
 router.post('/', authenticate, authorize('admin', 'manager'), async (req, res) => {
   try {
-    const { category_id, name, description, price, stock, image_url } = req.body;
+    const {
+      category_id,
+      code,
+      name,
+      short_description,
+      description,
+      details,
+      price,
+      stock,
+      warranty_months,
+      origin,
+      image_url
+    } = req.body;
+
+    if (!category_id || !code || !name || !short_description) {
+      return res.status(400).json({ message: 'Bạn nhập sai yêu cầu' });
+    }
+
+    const existing = await Product.findOne({ code: code.toUpperCase() });
+    if (existing) {
+      return res.status(400).json({ message: 'Mã code sản phẩm đã tồn tại' });
+    }
+
+    const priceValue = Number(price);
+    const stockValue = Number(stock);
+    const warrantyValue = warranty_months !== undefined ? Number(warranty_months) : 0;
+
+    if (Number.isNaN(priceValue) || Number.isNaN(stockValue) || Number.isNaN(warrantyValue)) {
+      return res.status(400).json({ message: 'Bạn nhập sai yêu cầu' });
+    }
 
     const product = await Product.create({
       category_id,
       manager_id: req.user.userId,
+      code: code.toUpperCase(),
       name,
+      short_description,
       description,
-      price,
-      stock,
+      details,
+      price: priceValue,
+      stock: stockValue,
+      warranty_months: warrantyValue,
+      origin,
       image_url: image_url || ''
     });
 
     const populatedProduct = await Product.findById(product._id)
-      .populate('category_id', 'category_name')
+      .populate('category_id', 'category_name code')
       .populate('manager_id', 'full_name');
 
     res.status(201).json({ message: 'Tạo sản phẩm thành công', product: populatedProduct });
@@ -105,11 +150,44 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
       return res.status(403).json({ message: 'Không có quyền cập nhật sản phẩm này' });
     }
 
+    const updateData = { ...req.body };
+    if (updateData.code) {
+      updateData.code = updateData.code.toUpperCase();
+      const exists = await Product.findOne({
+        code: updateData.code,
+        _id: { $ne: req.params.id }
+      });
+      if (exists) {
+        return res.status(400).json({ message: 'Mã code sản phẩm đã tồn tại' });
+      }
+    }
+
+    if (updateData.price !== undefined) {
+      updateData.price = Number(updateData.price);
+      if (Number.isNaN(updateData.price)) {
+        return res.status(400).json({ message: 'Bạn nhập sai yêu cầu' });
+      }
+    }
+
+    if (updateData.stock !== undefined) {
+      updateData.stock = Number(updateData.stock);
+      if (Number.isNaN(updateData.stock)) {
+        return res.status(400).json({ message: 'Bạn nhập sai yêu cầu' });
+      }
+    }
+
+    if (updateData.warranty_months !== undefined) {
+      updateData.warranty_months = Number(updateData.warranty_months);
+      if (Number.isNaN(updateData.warranty_months)) {
+        return res.status(400).json({ message: 'Bạn nhập sai yêu cầu' });
+      }
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
-    ).populate('category_id', 'category_name').populate('manager_id', 'full_name');
+    ).populate('category_id', 'category_name code').populate('manager_id', 'full_name');
 
     res.json({ message: 'Cập nhật sản phẩm thành công', product: updatedProduct });
   } catch (error) {
@@ -120,6 +198,15 @@ router.put('/:id', authenticate, authorize('admin', 'manager'), async (req, res)
 // Delete product (Admin only)
 router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
   try {
+    const usedInCart = await CartItem.findOne({ product_id: req.params.id });
+    if (usedInCart) {
+      return res.status(400).json({ message: 'Không thể xóa sản phẩm' });
+    }
+    const usedInOrder = await OrderDetail.findOne({ product_id: req.params.id });
+    if (usedInOrder) {
+      return res.status(400).json({ message: 'Không thể xóa sản phẩm' });
+    }
+
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
@@ -132,5 +219,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 module.exports = router;
+
+
 
 

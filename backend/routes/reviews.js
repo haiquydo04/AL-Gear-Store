@@ -7,7 +7,10 @@ const { authenticate, authorize, optionalAuth } = require('../middleware/auth');
 // Get reviews for a product
 router.get('/product/:productId', optionalAuth, async (req, res) => {
   try {
-    const reviews = await Review.find({ product_id: req.params.productId })
+    const reviews = await Review.find({
+      product_id: req.params.productId,
+      is_hidden: false
+    })
       .populate('user_id', 'full_name')
       .sort({ created_at: -1 });
 
@@ -18,6 +21,36 @@ router.get('/product/:productId', optionalAuth, async (req, res) => {
     res.json({ reviews, avgRating, total: reviews.length });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi lấy đánh giá', error: error.message });
+  }
+});
+
+// Admin/Manager review listing
+router.get('/admin', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const { search } = req.query;
+    const query = {};
+    if (search) {
+      query.comment = { $regex: search, $options: 'i' };
+    }
+
+    let reviews = await Review.find(query)
+      .populate('product_id', 'name code')
+      .populate('user_id', 'full_name')
+      .sort({ created_at: -1 });
+
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      reviews = reviews.filter(review =>
+        regex.test(review.comment || '') ||
+        regex.test(review.product_id?.name || '') ||
+        regex.test(review.product_id?.code || '') ||
+        regex.test(review.user_id?.full_name || '')
+      );
+    }
+
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi lấy danh sách đánh giá', error: error.message });
   }
 });
 
@@ -44,7 +77,6 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
     }
 
-    // Check if user already reviewed this product
     const existingReview = await Review.findOne({
       product_id,
       user_id: req.user.userId
@@ -104,7 +136,6 @@ router.delete('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy đánh giá' });
     }
 
-    // Check permission
     if (req.user.role !== 'admin' && req.user.role !== 'manager' &&
         review.user_id.toString() !== req.user.userId?.toString()) {
       return res.status(403).json({ message: 'Không có quyền xóa' });
@@ -117,6 +148,34 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Toggle review visibility
+router.patch('/:id/toggle-visibility', authenticate, authorize('admin', 'manager'), async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+      return res.status(404).json({ message: 'Không tìm thấy đánh giá' });
+    }
+
+    review.is_hidden = !review.is_hidden;
+    review.hidden_at = review.is_hidden ? new Date() : null;
+    review.hidden_by = review.is_hidden ? req.user.accountId : null;
+    await review.save();
+
+    const populated = await Review.findById(review._id)
+      .populate('product_id', 'name code')
+      .populate('user_id', 'full_name');
+
+    res.json({
+      message: review.is_hidden ? 'Đã ẩn đánh giá' : 'Đã hiển thị đánh giá',
+      review: populated
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi cập nhật đánh giá', error: error.message });
+  }
+});
+
 module.exports = router;
+
+
 
 

@@ -6,6 +6,13 @@ const categorySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  code: {
+    type: String,
+    required: true,
+    unique: true,
+    uppercase: true,
+    trim: true
+  },
   description: {
     type: String,
     trim: true
@@ -26,5 +33,7 @@ categorySchema.pre('save', function(next) {
 });
 
 module.exports = mongoose.model('Category', categorySchema);
+
+
 
 

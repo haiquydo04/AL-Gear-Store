@@ -22,14 +22,17 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        const response = await axios.get('/api/auth/me');
-        setUser(response.data.user);
+      if (!token) {
+        setUser(null);
+        return;
       }
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await axios.get('/api/auth/me');
+      setUser(response.data.user);
     } catch (error) {
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -51,13 +54,36 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await axios.post('/api/auth/register', userData);
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
-      return { success: true };
+      return { success: true, data: response.data };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Đăng ký thất bại' };
+    }
+  };
+
+  const requestPasswordReset = async (email) => {
+    try {
+      const response = await axios.post('/api/auth/forgot-password', { email });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Không thể gửi yêu cầu' };
+    }
+  };
+
+  const completePasswordReset = async (token) => {
+    try {
+      const response = await axios.post('/api/auth/reset-password', { token });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Không thể đặt lại mật khẩu' };
+    }
+  };
+
+  const changePassword = async (payload) => {
+    try {
+      const response = await axios.post('/api/auth/change-password', payload);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Đổi mật khẩu thất bại' };
     }
   };
 
@@ -79,6 +105,9 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    requestPasswordReset,
+    completePasswordReset,
+    changePassword,
     checkAuth
   };
 

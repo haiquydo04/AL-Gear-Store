@@ -29,9 +29,26 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
+  },
+  shipping_name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  shipping_phone: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  shipping_address: {
+    type: String,
+    required: true,
+    trim: true
   }
 });
 
 module.exports = mongoose.model('Order', orderSchema);
+
+
 
 
